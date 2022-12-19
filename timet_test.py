@@ -8,7 +8,8 @@ Created on Thu Dec  8 11:19:56 2022
 from TreinoQLearning import Treino
 from TCC_POO_Bruno import Game
 from TCC_POO_Bruno import IAQlearning
-from TCC_POO_Bruno import Thief_IA
+from TCC_POO_Bruno import LadraoAleatorio
+from TCC_POO_Bruno import LadraoInteligente
 import time
 import pickle
 
@@ -21,7 +22,7 @@ timelimit = 10800
 eps = 0
 results = []
 
-p2 = Thief_IA(0, 0)
+p2 = LadraoInteligente(0,0)
 
 for g in gens:
     for s in size:
@@ -29,7 +30,7 @@ for g in gens:
         add = [s,g]
         
         treino = Treino(s)
-        totaltime = treino.treino(eps,g,timelimit)
+        #totaltime = treino.treino(eps,g,timelimit)
         
         count = 0
         
@@ -39,15 +40,14 @@ for g in gens:
             if "Policia" == gm.play(False):
                 count += 1
             #else:
-            #    print("-----------------------------")
-            #    for h in gm.history:
-            #        print(h)
-            
-        
+                #print("-----------------------------")
+                #for h in gm.history:
+                    #print(h)
+           
         
         add.append(count)
         
-        add.append(totaltime)
+        #add.append(totaltime)
         
         results.append(add)
         print(add)

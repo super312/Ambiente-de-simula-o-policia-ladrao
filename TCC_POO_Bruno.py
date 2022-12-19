@@ -97,6 +97,9 @@ class Arena:
     
     def is_wall(self,x,y): #OK
         
+        if x < 0 or y < 0 or x >= self.SIZE or y >= self.SIZE:
+            return True
+    
         if self.walls[x,y] != 0:
             return True
         else:
@@ -135,7 +138,7 @@ class Player:
     def get_position(self): #OK
         return (self.x,self.y)
     
-    def next_action(self,gas,gas_x,gas_y,enemy_x,enemy_y): #OK
+    def next_action(self,gas,gas_x,gas_y,enemy_x,enemy_y,arena): #OK
         #TODO
         pass
     
@@ -157,7 +160,7 @@ class IAQlearning(Player): #Ia feita em Qlearning.
             pass
         
     
-    def next_action(self,gas,gasx,gasy,enemy_x,enemy_y): #OK
+    def next_action(self,gas,gasx,gasy,enemy_x,enemy_y,arena): #OK
         
         a0 = self.q_values[gas,gasx,gasy,enemy_x,enemy_y,self.x, self.y,0]
         a1 = self.q_values[gas,gasx,gasy,enemy_x,enemy_y,self.x, self.y,1]
@@ -172,9 +175,9 @@ class IAQlearning(Player): #Ia feita em Qlearning.
         
     pass
 
-class Thief_IA(Player):
+class LadraoAleatorio(Player):
     
-    def next_action(self,gas,gas_x,gas_y,enemy_x,enemy_y): #OK
+    def next_action(self,gas,gas_x,gas_y,enemy_x,enemy_y,arena): #OK
         
         return np.random.randint(4)
     
@@ -221,17 +224,23 @@ class Game:
     
     def play(self, slowdown = True): #OK
         self.history = []
+        self.history.append(self.print_state(True))
+        
+        it = 1
         while not self.end_of_game():
             
             oldl_x,oldl_y = self.p2.x,self.p2.y
-            action2 = self.p2.next_action(self.p1_current_gas,self.gas_x, self.gas_y, self.p1.x, self.p1.y)
-            self.p2.move(self.arena, action2)
+            action2 = self.p2.next_action(self.p1_current_gas,self.gas_x, self.gas_y, self.p1.x, self.p1.y,self.arena)
+            if it % 4 != 0:
+                self.p2.move(self.arena, action2)
+            else:
+                action2 = -1
             
             if self.end_of_game():
-                self.history.append(self.print_state(True))
+                self.history.append(self.print_state(True,(action2,-1)))
                 break
             
-            action1 = self.p1.next_action(self.p1_current_gas,self.gas_x, self.gas_y, oldl_x, oldl_y)
+            action1 = self.p1.next_action(self.p1_current_gas,self.gas_x, self.gas_y, oldl_x, oldl_y,self.arena)
             self.p1.move(self.arena, action1)
             
             self.update_gas_location()
@@ -242,14 +251,15 @@ class Game:
                 self.print_state()
                 time.sleep(0.5)
                 
-            self.history.append(self.print_state(True))
+            self.history.append(self.print_state(True,(action2,action1)))
+            it += 1
             
         if slowdown:
             print("Fim de jogo o vencendor é: " + self.winner)
         return self.winner
         pass
     
-    def print_state(self,store = False): #OK?
+    def print_state(self,store = False,a = (-1,-1)): #OK?
         
         board = np.full((self.SIZE,self.SIZE),".")
         for i in range(self.SIZE):
@@ -260,11 +270,11 @@ class Game:
         board[self.p2.x,self.p2.y] = "L"
         board[self.p1.x,self.p1.y] = "P"
         
-        mapa = "gas = " + str(self.p1_current_gas) + "\n"
+        mapa = "gas = " + str(self.p1_current_gas) + " " + str(a) + "\n"
         for i in range(self.SIZE):
             linha = ""
             for j in range(self.SIZE):
-                linha += board[i][j] + " "
+                linha += board[j][i] + " "
             mapa += linha + "\n"
         
         if not store:
@@ -309,10 +319,24 @@ class Game:
             False
         
 
-class MeuLadrao(Player):
+class LadraoInteligente(Player):
     
-    def next_action(self,gas_x,gas_y,enemy_x,enemy_y):
-        return 1
+    def next_action(self,gas,gas_x,gas_y,enemy_x,enemy_y,arena):
+        
+        distancia = [0,0,0,0]
+        
+        #Testando para cima
+        if not arena.is_wall(self.x,self.y-1):
+            distancia[0] = abs(self.x-enemy_x) + abs(self.y-1 - enemy_y)
+        if not arena.is_wall(self.x+1,self.y):
+            distancia[1] = abs(self.x+1 - enemy_x) + abs(self.y - enemy_y)
+        if not arena.is_wall(self.x,self.y+1):
+            distancia[2] = abs(self.x-enemy_x) + abs(self.y+1 - enemy_y)
+        if not arena.is_wall(self.x-1,self.y):
+            distancia[3] = abs(self.x-1 - enemy_x) + abs(self.y - enemy_y)
+        
+        return np.argmax(distancia)
+        
         pass
     
     pass
